@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getRandomByCategory } from '../api/frasesApi'
 import { getDailyContent } from '../utils/dailyContent'
 import '../styles/pageLayout.css'
 
@@ -21,9 +20,14 @@ export default function Naughty() {
   const cargar = async () => {
     setLoading(true)
 
-    const result = await getDailyContent(config, () =>
-      getRandomByCategory('naughty')
-    )
+    const result = await getDailyContent(config, async () => {
+      const res = await fetch('/api/naughty')
+      const data = await res.json()
+
+      return {
+        message: data[0]?.texto ?? 'Se oye una risa baja…',
+      }
+    })
 
     if (result.locked) {
       setTexto(result.message || null)
@@ -32,7 +36,7 @@ export default function Naughty() {
     } else {
       setTexto(result.data?.message || null)
       setLocked(false)
-      setJustLocked(true) // aparece desde el primero
+      setJustLocked(true)
     }
 
     setLoading(false)
@@ -40,11 +44,7 @@ export default function Naughty() {
 
   useEffect(() => {
     setTexto('Se oye una risa baja…')
-
-    const timer = setTimeout(() => {
-      cargar()
-    }, 1800)
-
+    const timer = setTimeout(cargar, 1800)
     return () => clearTimeout(timer)
   }, [])
 
@@ -53,11 +53,7 @@ export default function Naughty() {
       <h1 className="page-title">Susurro Travieso</h1>
 
       {texto && (
-        <p
-          className={`page-text fade-text ${
-            loading ? 'subtle' : locked ? 'muted' : ''
-          }`}
-        >
+        <p className={`page-text fade-text ${loading ? 'subtle' : locked ? 'muted' : ''}`}>
           {texto}
         </p>
       )}

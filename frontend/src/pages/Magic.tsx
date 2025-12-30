@@ -22,11 +22,10 @@ export default function Magic() {
   }
 
   const elegirTrebol = (): TrebolTipo => {
-    // ultra raro el de 5 hojas
     const r = Math.random()
-    if (r < 0.05) return 5     // 5%
-    if (r < 0.35) return 4     // 30%
-    return 3                  // 65%
+    if (r < 0.05) return 5
+    if (r < 0.35) return 4
+    return 3
   }
 
   const cargarMensaje = async () => {
@@ -34,14 +33,17 @@ export default function Magic() {
 
     const result = await getDailyContent(config, async () => {
       const res = await fetch('/api/magic')
-      return res.json()
+      const data = await res.json()
+
+      return {
+        message: data[0]?.texto ?? 'El bosque guarda silencio…',
+      }
     })
 
     if (result.locked) {
       setTexto(result.message ?? null)
       setLocked(true)
 
-      // SOLO si ya habló hoy → preparar trébol
       const hoy = new Date().toDateString()
       const guardado = localStorage.getItem('trebol-magic')
 
@@ -56,17 +58,14 @@ export default function Magic() {
         setTrebolTipo(JSON.parse(guardado).tipo)
       }
 
-      // esperar 3s, ocultar texto y mostrar trébol
       setTimeout(() => {
         setTexto(null)
         setMostrarTrebol(true)
 
-        // ocultar trébol tras 10s
         setTimeout(() => {
           setMostrarTrebol(false)
         }, 10000)
       }, 3000)
-
     } else if (result.data) {
       setTexto(result.data.message)
       setLocked(false)
@@ -77,11 +76,7 @@ export default function Magic() {
 
   useEffect(() => {
     setTexto('El bosque guarda silencio…')
-
-    const timer = setTimeout(() => {
-      cargarMensaje()
-    }, 2000)
-
+    const timer = setTimeout(cargarMensaje, 2000)
     return () => clearTimeout(timer)
   }, [])
 
@@ -89,25 +84,18 @@ export default function Magic() {
     <div className="page-container">
       <h1 className="page-title">Mensaje</h1>
 
-      {/* TEXTO */}
       {texto && (
-        <p
-          className={`page-text ${
-            loading ? 'subtle' : locked ? 'muted fade-text' : 'fade-text'
-          }`}
-        >
+        <p className={`page-text ${loading ? 'subtle' : locked ? 'muted fade-text' : 'fade-text'}`}>
           {texto}
         </p>
       )}
 
-      {/* BOTÓN REINTENTAR */}
       {!locked && !loading && (
         <button className="page-button" onClick={cargarMensaje}>
           Escuchar otra vez
         </button>
       )}
 
-      {/* TRÉBOL */}
       {mostrarTrebol && trebolTipo && (
         <div className="fade-text" style={{ marginTop: '2rem' }}>
           <img
@@ -115,13 +103,12 @@ export default function Magic() {
             alt={`Trébol de ${trebolTipo} hojas`}
             style={{ width: '160px' }}
           />
-          <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '0.5rem' }}>
+          <p style={{ fontSize: '0.85rem', opacity: 0.7 }}>
             Has encontrado un trébol de {trebolTipo} hojas
           </p>
         </div>
       )}
 
-      {/* VOLVER */}
       {!loading && (
         <button className="back-btn" onClick={() => navigate('/')}>
           ← Volver
@@ -130,6 +117,8 @@ export default function Magic() {
     </div>
   )
 }
+
+
 
 
 
