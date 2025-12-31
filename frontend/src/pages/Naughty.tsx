@@ -58,7 +58,7 @@ export default function Naughty() {
       )}
 
       <button className="back-btn" onClick={() => navigate('/')}>
-        ← Volver
+        ← Regresar
       </button>
     </div>
   )

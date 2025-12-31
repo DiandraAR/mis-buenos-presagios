@@ -67,7 +67,7 @@ export default function Lucky() {
 
       
       <button className="back-btn" onClick={() => navigate('/')}>
-        ← Volver
+        ← Regresar
       </button>
     </div>
   )

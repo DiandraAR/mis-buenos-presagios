@@ -95,7 +95,7 @@ export default function Magic() {
       )}
 
       <button className="back-btn" onClick={() => navigate('/')}>
-        ← Volver
+        ← Regresar
       </button>
     </div>
   )
