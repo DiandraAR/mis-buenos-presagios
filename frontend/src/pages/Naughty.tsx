@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getRandomByCategory } from '../api/frasesApi'
 import { getDailyContent } from '../utils/dailyContent'
@@ -6,6 +6,7 @@ import '../styles/pageLayout.css'
 
 export default function Naughty() {
   const navigate = useNavigate()
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const [texto, setTexto] = useState<string | null>(null)
   const [locked, setLocked] = useState(false)
@@ -17,8 +18,24 @@ export default function Naughty() {
     emptyMessage: 'El duende sonríe, pero ya no dice más.',
   }
 
+  const playSound = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/sonidos/naughty.mp3')
+    }
+    audioRef.current.currentTime = 0
+    audioRef.current.play()
+  }
+
+  const stopSound = () => {
+    audioRef.current?.pause()
+    audioRef.current && (audioRef.current.currentTime = 0)
+  }
+
   const cargar = async () => {
+    stopSound()
     setLoading(true)
+    setTexto('Se oye una risa baja…')
+    playSound()
 
     const result = await getDailyContent(config, () =>
       getRandomByCategory('naughty')
@@ -36,9 +53,11 @@ export default function Naughty() {
   }
 
   useEffect(() => {
-    setTexto('Se oye una risa baja…')
     const timer = setTimeout(cargar, 1800)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      stopSound()
+    }
   }, [])
 
   return (
@@ -63,6 +82,8 @@ export default function Naughty() {
     </div>
   )
 }
+
+
 
 
 

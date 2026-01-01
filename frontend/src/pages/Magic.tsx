@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDailyContent } from '../utils/dailyContent'
 import '../styles/pageLayout.css'
 
-type TrebolTipo = 3 | 4 | 5
+type TrebolTipo = 4 | 5 | 6
 
 export default function Magic() {
   const navigate = useNavigate()
@@ -14,6 +14,9 @@ export default function Magic() {
   const [mostrarTrebol, setMostrarTrebol] = useState(false)
   const [trebolTipo, setTrebolTipo] = useState<TrebolTipo | null>(null)
 
+  // Referencia al audio
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
   const config = {
     key: 'magic',
     limit: 1,
@@ -22,13 +25,33 @@ export default function Magic() {
 
   const elegirTrebol = (): TrebolTipo => {
     const r = Math.random()
-    if (r < 0.05) return 5
-    if (r < 0.35) return 4
-    return 3
+    if (r < 0.05) return 6
+    if (r < 0.35) return 5
+    return 4
+  }
+
+  const reproducirSonido = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/sonidos/magic.mp3')
+      audioRef.current.volume = 0.3
+    }
+
+    audioRef.current.currentTime = 0
+    audioRef.current.play().catch(() => {})
+  }
+
+  const detenerSonido = () => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
   }
 
   const cargarMensaje = async () => {
     setLoading(true)
+
+    // empieza el sonido cuando arranca la carga
+    reproducirSonido()
 
     const result = await getDailyContent(config, async () => {
       const res = await fetch('/api/magic')
@@ -53,11 +76,18 @@ export default function Magic() {
       setTimeout(() => {
         setTexto(null)
         setMostrarTrebol(true)
+
+        // cortamos el sonido
+        detenerSonido()
+
         setTimeout(() => setMostrarTrebol(false), 10000)
       }, 3000)
     } else if (result.data) {
       setTexto(result.data.message)
       setLocked(false)
+
+      // cortamos el sonido cuando aparece el mensaje real
+      setTimeout(detenerSonido, 2500)
     }
 
     setLoading(false)
@@ -65,8 +95,16 @@ export default function Magic() {
 
   useEffect(() => {
     setTexto('El bosque guarda silencio…')
+
+    // sonido inicial
+    reproducirSonido()
+
     const timer = setTimeout(cargarMensaje, 2000)
-    return () => clearTimeout(timer)
+
+    return () => {
+      clearTimeout(timer)
+      detenerSonido()
+    }
   }, [])
 
   return (
@@ -87,7 +125,7 @@ export default function Magic() {
 
       {mostrarTrebol && trebolTipo && (
         <div className="fade-text" style={{ marginTop: '2rem' }}>
-          <img src={`/treboles/trebol-${trebolTipo}.png`} style={{ width: '160px' }} />
+          <img src={`/imagenes/trebol-${trebolTipo}.png`} style={{ width: '160px' }} />
           <p style={{ fontSize: '0.85rem', opacity: 0.7 }}>
             Has encontrado un trébol de {trebolTipo} hojas
           </p>
@@ -100,6 +138,8 @@ export default function Magic() {
     </div>
   )
 }
+
+
 
 
 
